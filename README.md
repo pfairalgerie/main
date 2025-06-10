@@ -151,7 +151,7 @@
       <a href="https://discord.com/oauth2/authorize?client_id=1378686356590559343&response_type=code&redirect_uri=https%3A%2F%2Fpfairalgerie.github.io%2Fmain-loggedin%2F&scope=identify+email">Login with Discord</a>
       <a href="mailto:pfairalgerievirtual@gmail.com">Contact</a>
       <a href="https://discord.gg/ZmpVNbRecK" target="_blank">Discord</a>
-      <a href="#">Server's Rules</a>
+      <a href="https://pfairalgerie.github.io/rules/">Server's Rules</a>
     </div>
   </nav>
 
