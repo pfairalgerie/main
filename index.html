@@ -57,31 +57,52 @@
     nav ul li a:hover {
       color: var(--highlight);
     }
-    nav .auth-buttons a {
-      margin-left: 1rem;
-      padding: 0.5rem 1.2rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      text-decoration: none;
-      display: inline-block;
-      background: var(--accent);
-      color: white;
+    /* Styles for the login/logout section */
+    .user-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
     }
     .discord-login {
-  background-color: #5865F2; /* Couleur Discord */
-  color: white;
-  padding: 10px 16px;
-  border: none;
-  border-radius: 8px;
-  text-decoration: none;
-  font-weight: bold;
-  font-size: 14px;
-  transition: background 0.2s;
-}
-
-.discord-login:hover {
-  background-color: #4752C4;
-}
+      background-color: #5865F2; /* Discord color */
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 0.5rem;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: background 0.2s;
+    }
+    .discord-login:hover {
+      background-color: #4752C4;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--primary-text);
+      font-weight: 600;
+    }
+    .user-info img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid var(--highlight);
+    }
+    .logout-button {
+      background-color: var(--accent);
+      color: white;
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    .logout-button:hover {
+      background-color: #c42020;
+    }
 
     header {
       padding: 5rem 2rem 3rem;
@@ -219,8 +240,6 @@
   </style>
 </head>
 <body>
-  <div id="userSection"></div>
-
   <canvas class="particles"></canvas>
   <nav>
     <div class="logo">
@@ -230,9 +249,8 @@
       <li><a href="https://pfairalgerie.github.io/about-us/">About Us</a></li>
       <li><a href="https://pfairalgerie.github.io/rules/">Server's Rules</a></li>
     </ul>
-  <a href="https://discord.com/oauth2/authorize?client_id=1378686356590559343&redirect_uri=https%3A%2F%2Fpfairalgerie.github.io%2Fmain%2F&response_type=token&scope=identify"
-   class="discord-login">Login with Discord</a>
-</div>
+    <div class="user-actions">
+      </div>
   </nav>
 
   <header>
@@ -268,6 +286,7 @@
       <div class="feature">
       <h3>Exclusive Events</h3>
       <p>We hope to make some group flight with all the community to Unite the community and build the best of it.</p>
+    </div>
   </section>
 
   <div class="quote">
@@ -283,38 +302,48 @@
     Air Algérie Virtual © 2025 — All Right Reserved.
   </footer>
 
-   <script>
+  <script>
     const CLIENT_ID = "1378686356590559343";
     const REDIRECT_URI = "https://pfairalgerie.github.io/main/";
-    const AUTH_URL = `https://discord.com/oauth2/authorize?client_id=1378686356590559343&response_type=code&redirect_uri=https%3A%2F%2Fpfairalgerie.github.io%2Fmain%2F&scope=identify`;
+    // Make sure the scope includes 'identify' for username and discriminator
+    const AUTH_URL = `https://discord.com/oauth2/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=identify`;
 
+    const userActionsDiv = document.querySelector(".user-actions"); // Select the new div for actions
+
+    // Function to display user info and logout button
+    function showUser(user) {
+      const avatarUrl = user.avatar ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png` : 'https://discord.com/assets/f135b1fcd3d2c4935480d19e910540d5.png'; // Default Discord avatar if none exists
+      userActionsDiv.innerHTML = `
+        <div class="user-info">
+          <img src="${avatarUrl}" alt="Avatar">
+          <span>${user.username}#${user.discriminator}</span>
+        </div>
+        <button id="logout-btn" class="logout-button">Logout</button>
+      `;
+
+      document.getElementById("logout-btn").onclick = () => {
+        localStorage.removeItem("discordUser");
+        window.location.href = REDIRECT_URI; // Redirect to clear URL and re-render
+      };
+    }
+
+    // Function to display the login button
+    function showLoginButton() {
+      userActionsDiv.innerHTML = `
+        <a href="${AUTH_URL}" class="discord-login">Login with Discord</a>
+      `;
+    }
+
+    // Main logic for handling login state
     const hash = window.location.hash.substring(1);
     const params = new URLSearchParams(hash);
     const token = params.get("access_token");
 
-    const userSection = document.getElementById("userSection");
     const savedUser = JSON.parse(localStorage.getItem("discordUser"));
 
-    function showUser(user) {
-      const avatarUrl = `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`;
-      userSection.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="${avatarUrl}" alt="Avatar" style="width: 40px; height: 40px; border-radius: 50%;">
-          <span><strong>${user.username}#${user.discriminator}</strong></span>
-          <button id="logout-btn">Logout</button>
-        </div>
-      `;
-
-      // Add logout behavior
-      document.getElementById("logout-btn").onclick = () => {
-        localStorage.removeItem("discordUser");
-        window.location.href = REDIRECT_URI;
-      };
-    }
-
     if (token) {
-      // Remove token from URL
-      window.history.replaceState({}, document.title, REDIRECT_URI);
+      // If a token is present in the URL, try to fetch user data
+      window.history.replaceState({}, document.title, REDIRECT_URI); // Clean the URL
 
       fetch("https://discord.com/api/users/@me", {
         headers: {
@@ -323,22 +352,126 @@
       })
       .then(res => res.json())
       .then(user => {
-        localStorage.setItem("discordUser", JSON.stringify(user));
-        showUser(user);
+        if (user.id) { // Check if user data is valid
+          localStorage.setItem("discordUser", JSON.stringify(user));
+          showUser(user);
+        } else {
+          // If Discord API returns an error or invalid user, show login
+          console.error("Failed to fetch Discord user data:", user);
+          showLoginButton();
+        }
       })
-      .catch(() => {
-        userSection.innerHTML = "Login failed";
+      .catch(error => {
+        console.error("Error fetching Discord user:", error);
+        showLoginButton(); // Show login button on fetch error
       });
-
     } else if (savedUser) {
+      // If no token in URL but user data is in localStorage, display user info
       showUser(savedUser);
     } else {
-      // Show login button
-      const loginBtn = document.getElementById("login-btn");
-      loginBtn.onclick = () => {
-        window.location.href = AUTH_URL;
-      };
+      // No token and no saved user, show the login button
+      showLoginButton();
     }
+
+    // Particles animation (original code, no changes needed)
+    // You'd typically include your particle.js script here or inline it as you did
+    (function () {
+        const canvas = document.querySelector("canvas.particles");
+        const ctx = canvas.getContext("2d");
+
+        let particles = [];
+        let mouse = { x: null, y: null };
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            createParticles();
+        }
+
+        function createParticles() {
+            particles = [];
+            for (let i = 0; i < (canvas.width * canvas.height) / 9000; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = Math.random() * 0.5 - 0.25;
+                this.speedY = Math.random() * 0.5 - 0.25;
+                this.color = "rgba(255,255,255,0.8)";
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.size > 0.2) this.size -= 0.01;
+
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+
+                // mouse interaction
+                let dx = mouse.x - this.x;
+                let dy = mouse.y - this.y;
+                let distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 100) {
+                    this.x -= dx / 15;
+                    this.y -= dy / 15;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < particles.length; i++) {
+                particles[i].update();
+                particles[i].draw();
+
+                for (let j = i; j < particles.length; j++) {
+                    let dx = particles[i].x - particles[j].x;
+                    let dy = particles[i].y - particles[j].y;
+                    let distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 80) {
+                        ctx.beginPath();
+                        ctx.strokeStyle = `rgba(255,255,255,${1 - (distance / 80)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        canvas.addEventListener("mousemove", (e) => {
+            mouse.x = e.x;
+            mouse.y = e.y;
+        });
+
+        canvas.addEventListener("mouseleave", () => {
+            mouse.x = null;
+            mouse.y = null;
+        });
+
+        window.addEventListener("resize", resizeCanvas);
+
+        resizeCanvas();
+        animate();
+    })();
   </script>
 </body>
 </html>
